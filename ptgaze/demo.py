@@ -1,15 +1,17 @@
 import datetime
 import logging
 import pathlib
+from ptgaze.common import yawn
 from typing import Optional
 
 import cv2
 import numpy as np
 from omegaconf import DictConfig
 
-from .common import Face, FacePartsName, Visualizer
-from .gaze_estimator import GazeEstimator
-from .utils import get_3d_face_model
+from common import Face, FacePartsName, Visualizer
+from gaze_estimator import GazeEstimator
+from utils import get_3d_face_model
+from common.yawn import Yawn
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -24,6 +26,7 @@ class Demo:
         face_model_3d = get_3d_face_model(config)
         self.visualizer = Visualizer(self.gaze_estimator.camera,
                                      face_model_3d.NOSE_INDEX)
+        self.yawn = Yawn(config)
 
         self.cap = self._create_capture()
         self.output_dir = self._create_output_dir()
@@ -93,6 +96,7 @@ class Demo:
             self._draw_face_template_model(face)
             self._draw_gaze_vector(face)
             self._display_normalized_image(face)
+            self._display_info(image, face)
 
         if self.config.demo.use_camera:
             self.visualizer.image = self.visualizer.image[:, ::-1]
@@ -131,7 +135,7 @@ class Demo:
             return None
         ext = self.config.demo.output_file_extension
         if ext == 'mp4':
-            fourcc = cv2.VideoWriter_fourcc(*'H264')
+            fourcc = cv2.VideoWriter_fourcc('F','F','V','1')
         elif ext == 'avi':
             fourcc = cv2.VideoWriter_fourcc(*'PIM1')
         else:
@@ -144,9 +148,12 @@ class Demo:
         else:
             raise ValueError
         output_path = self.output_dir / output_name
+        # writer = cv2.VideoWriter(output_path.as_posix(), fourcc, 30,
+        #                          (self.gaze_estimator.camera.width,
+        #                           self.gaze_estimator.camera.height))
         writer = cv2.VideoWriter(output_path.as_posix(), fourcc, 30,
-                                 (self.gaze_estimator.camera.width,
-                                  self.gaze_estimator.camera.height))
+                                 (1280,
+                                  720))
         if writer is None:
             raise RuntimeError
         return writer
@@ -216,6 +223,10 @@ class Demo:
         if self.config.demo.use_camera:
             normalized = normalized[:, ::-1]
         cv2.imshow('normalized', normalized)
+
+    def _display_info(self, frame, face: Face) -> None:
+        yawn_count = self.yawn._detect_yawn(frame, face.bbox)
+        self.visualizer.draw_info(yawn_count, org=(10, 50))
 
     def _draw_gaze_vector(self, face: Face) -> None:
         length = self.config.demo.gaze_visualization_length

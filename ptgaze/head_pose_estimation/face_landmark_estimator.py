@@ -7,7 +7,7 @@ import mediapipe
 import numpy as np
 from omegaconf import DictConfig
 
-from ..common import Face
+from common.face import Face
 
 
 class LandmarkEstimator:
@@ -48,7 +48,7 @@ class LandmarkEstimator:
             return self._detect_faces_mediapipe(image)
         else:
             raise ValueError
-
+            
     def _detect_faces_dlib(self, image: np.ndarray) -> List[Face]:
         bboxes = self.detector(image[:, :, ::-1], 0)
         detected = []

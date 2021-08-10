@@ -1,0 +1,24 @@
+camera_matrix:
+  cols: 3
+  data:
+  - 0
+  - 0.0
+  - 0
+  - 0.0
+  - 0
+  - 0
+  - 0.0
+  - 0.0
+  - 1.0
+  rows: 3
+distortion_coefficients:
+  cols: 5
+  data:
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  rows: 1
+image_height: 0
+image_width: 0

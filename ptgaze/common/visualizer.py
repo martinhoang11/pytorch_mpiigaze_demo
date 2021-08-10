@@ -55,14 +55,18 @@ class Visualizer:
                      point0: np.ndarray,
                      point1: np.ndarray,
                      color: Tuple[int, int, int] = (255, 255, 0),
-                     lw=1) -> None:
+                     lw=2) -> None:
         assert self.image is not None
         assert point0.shape == point1.shape == (3, )
         points3d = np.vstack([point0, point1])
         points2d = self._camera.project_points(points3d)
         pt0 = self._convert_pt(points2d[0])
         pt1 = self._convert_pt(points2d[1])
-        cv2.line(self.image, pt0, pt1, color, lw, cv2.LINE_AA)
+        # cv2.line(self.image, pt0, pt1, color, lw, cv2.LINE_AA)
+        cv2.arrowedLine(self.image, pt0, pt1, color, lw, cv2.LINE_AA)
+        # cv2.arrowedLine(image_out, tuple(np.round(pos).astype(np.int32)),
+        #            tuple(np.round([pos[0] + dx, pos[1] + dy]).astype(int)), color,
+        #            thickness, cv2.LINE_AA, tipLength=0.2)
 
     def draw_model_axes(self, face: Face, length: float, lw: int = 2) -> None:
         assert self.image is not None
@@ -82,3 +86,6 @@ class Visualizer:
         for pt, color in zip(axes2d, AXIS_COLORS):
             pt = self._convert_pt(pt)
             cv2.line(self.image, center, pt, color, lw, cv2.LINE_AA)
+    
+    def draw_info(self, count: int, org: int, color: int = (255, 0, 0)) -> None:
+        cv2.putText(self.image, f"Yawn_count: {count}", org, cv2.FONT_HERSHEY_SIMPLEX, 0.55, color, 1, cv2.LINE_AA)

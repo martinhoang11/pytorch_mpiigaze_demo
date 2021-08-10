@@ -1,6 +1,5 @@
-
-image_width: 640
-image_height: 480
+image_width: 480 #640
+image_height: 640 #480
 camera_matrix:
     rows: 3
     cols: 3

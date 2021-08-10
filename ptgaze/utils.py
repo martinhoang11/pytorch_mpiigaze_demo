@@ -8,9 +8,9 @@ import torch.hub
 import yaml
 from omegaconf import DictConfig
 
-from .common.face_model import FaceModel
-from .common.face_model_68 import FaceModel68
-from .common.face_model_mediapipe import FaceModelMediaPipe
+from common.face_model import FaceModel
+from common.face_model_68 import FaceModel68
+from common.face_model_mediapipe import FaceModelMediaPipe
 
 logger = logging.getLogger(__name__)
 
@@ -128,9 +128,9 @@ def generate_dummy_camera_params(config: DictConfig) -> None:
             'data': [0., 0., 0., 0., 0.]
         }
     }
-    with open('/tmp/camera_params.yaml', 'w') as f:
+    with open('./tmp/camera_params.yaml', 'w') as f:
         yaml.safe_dump(dic, f)
-    config.gaze_estimator.camera_params = '/tmp/camera_params.yaml'
+    config.gaze_estimator.camera_params = './tmp/camera_params.yaml'
     logger.debug(
         'Update config.gaze_estimator.camera_params to /tmp/camera_params.yaml'
     )
