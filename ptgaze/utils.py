@@ -4,8 +4,10 @@ import operator
 import pathlib
 
 import cv2
+import numpy
 import torch.hub
 import yaml
+import numpy as np
 from omegaconf import DictConfig
 
 from common.face_model import FaceModel
@@ -63,6 +65,8 @@ def download_mpiigaze_model() -> pathlib.Path:
         logger.debug(f'The pretrained model {output_path} already exists.')
     return output_path
 
+def round(num) -> numpy.float64:
+    return numpy.round(num, 2)
 
 def download_mpiifacegaze_model() -> pathlib.Path:
     logger.debug('Called _download_mpiifacegaze_model()')
@@ -168,7 +172,6 @@ def _check_path(config: DictConfig, key: str) -> None:
     if not path.is_file():
         raise ValueError(f'config.{key}: {path.as_posix()} is not a file.')
 
-
 def check_path_all(config: DictConfig) -> None:
     if config.face_detector.mode == 'dlib':
         _check_path(config, 'face_detector.dlib_model_path')
@@ -179,3 +182,88 @@ def check_path_all(config: DictConfig) -> None:
         _check_path(config, 'demo.image_path')
     if config.demo.video_path:
         _check_path(config, 'demo.video_path')
+
+def logit_arr(p, factor=16.0):
+    p = np.clip(p, 0.0000001, 0.9999999)
+    return np.log(p / (1 - p)) / float(factor)
+
+def clamp_to_im(pt, w, h):
+    x = pt[0]
+    y = pt[1]
+    if x < 0:
+        x = 0
+    if y < 0:
+        y = 0
+    if x >= w:
+        x = w-1
+    if y >= h:
+        y = h-1
+    return (int(x), int(y+1))
+
+def preprocess(im, crop, res_i, std_res, mean_res):
+    x1, y1, x2, y2 = crop
+    im = np.float32(im[y1:y2, x1:x2,::-1]) # Crop and BGR to RGB
+    im = cv2.resize(im, (res_i, res_i), interpolation=cv2.INTER_LINEAR) *std_res + mean_res
+    im = np.expand_dims(im, 0)
+    im = np.transpose(im, (0,3,1,2))
+    return im
+
+def logit_arr(p, factor=16.0):
+    p = np.clip(p, 0.0000001, 0.9999999)
+    return np.log(p / (1 - p)) / float(factor)
+
+def group_rects(rects):
+    rect_groups = {}
+    for rect in rects:
+        rect_groups[str(rect)] = [-1, -1, []]
+    group_id = 0
+    for i, rect in enumerate(rects):
+        name = str(rect)
+        group = group_id
+        group_id += 1
+        if rect_groups[name][0] < 0:
+            rect_groups[name] = [group, -1, []]
+        else:
+            group = rect_groups[name][0]
+        for j, other_rect in enumerate(rects):
+            if i == j:
+                continue;
+            inter = intersects(rect, other_rect)
+            if intersects(rect, other_rect):
+                rect_groups[str(other_rect)] = [group, -1, []]
+    return rect_groups
+
+def intersects(r1, r2, amount=0.3):
+    area1 = r1[2] * r1[3]
+    area2 = r2[2] * r2[3]
+    inter = 0.0
+    total = area1 + area2
+    
+    r1_x1, r1_y1, w, h = r1
+    r1_x2 = r1_x1 + w
+    r1_y2 = r1_y1 + h
+    r2_x1, r2_y1, w, h = r2
+    r2_x2 = r2_x1 + w
+    r2_y2 = r2_y1 + h
+
+    left = max(r1_x1, r2_x1)
+    right = min(r1_x2, r2_x2)
+    top = max(r1_y1, r2_y1)
+    bottom = min(r1_y2, r2_y2)
+    if left < right and top < bottom:
+        inter = (right - left) * (bottom - top)
+        total -= inter
+
+    if inter / total >= amount:
+        return True
+
+    return False
+
+def get_model_base_path(model_dir):
+    model_base_path = resolve(os.path.join("models"))
+    if model_dir is None:
+        if not os.path.exists(model_base_path):
+            model_base_path = resolve(os.path.join("..", "models"))
+    else:
+        model_base_path = model_dir
+    return model_base_path

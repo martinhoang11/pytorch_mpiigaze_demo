@@ -3,8 +3,9 @@ device: cpu
 model:
   name: resnet18
 face_detector:
-  mode: mediapipe
+  mode: mbn_v3
   dlib_model_path: ~/.ptgaze/dlib/shape_predictor_68_face_landmarks.dat
+  mbn_v3_path: C:\Users\huynh14\DMS\intern_dms\models\mnv3_detection_opt.onnx
   mediapipe_max_num_faces: 3
 gaze_estimator:
   checkpoint: ~/.ptgaze/models/eth-xgaze_resnet18.pth
@@ -15,9 +16,8 @@ gaze_estimator:
   image_size: [224, 224]
 yawn_detector:
   model_path: C:\Users\huynh14\DMS\intern_dms\models\yawn_model_80.onnx
-  # camera:
-  #   width: 480
-  #   height: 640
+lms_detector:
+  model_path: ""
 demo:
   use_camera: true
   display_on_screen: true
@@ -29,7 +29,7 @@ demo:
   head_pose_axis_length: 0.05
   gaze_visualization_length: 0.05
   show_bbox: true
-  show_head_pose: false
+  show_head_pose: true
   show_landmarks: false
   show_normalized_image: false
   show_template_model: false

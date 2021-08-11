@@ -2,9 +2,11 @@ import logging
 from typing import List
 
 import numpy as np
+import cv2
 import torch
+import onnxruntime
+import os
 from omegaconf import DictConfig
-
 from common import Camera, Face, FacePartsName
 from head_pose_estimation import HeadPoseNormalizer, LandmarkEstimator
 from models import create_model
@@ -33,6 +35,7 @@ class GazeEstimator:
         self._gaze_estimation_model = self._load_model()
         self._transform = create_transform(config)
 
+
     def _load_model(self) -> torch.nn.Module:
         model = create_model(self._config)
         checkpoint = torch.load(self._config.gaze_estimator.checkpoint,
@@ -44,6 +47,7 @@ class GazeEstimator:
 
     def detect_faces(self, image: np.ndarray) -> List[Face]:
         return self._landmark_estimator.detect_faces(image)
+    
 
     def estimate_gaze(self, image: np.ndarray, face: Face) -> None:
         self._face_model3d.estimate_head_pose(face, self.camera)

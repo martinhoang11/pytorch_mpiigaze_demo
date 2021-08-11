@@ -39,14 +39,14 @@ class Yawn:
         label_name = onnx_sess.get_outputs()[0].name
         return onnx_sess, input_name, label_name
 
-    def prepare_input_blob(self, im: np.ndarray) -> np.ndarray:
+    def _prepare_input_blob(self, im: np.ndarray) -> np.ndarray:
         if im.shape[0] != self.MAX_IMAGE_WIDTH or im.shape[1] != self.MAX_IMAGE_HEIGHT:
             im = cv2.resize(im, self.IMAGE_PAIR_SIZE)
         im = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
         return im
 
     def _detect_image(self, frame, face: Face):
-        gray_img = self.prepare_input_blob(frame)
+        gray_img = self._prepare_input_blob(frame)
         image_frame = gray_img[:, :, np.newaxis]
         image_frame = image_frame / 255.0
         image_frame = np.expand_dims(image_frame, 0).astype(np.float32)

@@ -87,5 +87,5 @@ class Visualizer:
             pt = self._convert_pt(pt)
             cv2.line(self.image, center, pt, color, lw, cv2.LINE_AA)
     
-    def draw_info(self, count: int, org: int, color: int = (255, 0, 0)) -> None:
-        cv2.putText(self.image, f"Yawn_count: {count}", org, cv2.FONT_HERSHEY_SIMPLEX, 0.55, color, 1, cv2.LINE_AA)
+    def draw_info(self, name, attr, org: int, color: int = (255, 0, 0)) -> None:
+        cv2.putText(self.image, f"{name}: {attr}", org, cv2.FONT_HERSHEY_SIMPLEX, 0.7, color, 1, cv2.LINE_AA)

@@ -5,9 +5,12 @@ import face_alignment
 import face_alignment.detection.sfd
 import mediapipe
 import numpy as np
+import cv2
+import os
 from omegaconf import DictConfig
-
+import onnxruntime
 from common.face import Face
+from utils import logit_arr
 
 
 class LandmarkEstimator:
@@ -34,6 +37,17 @@ class LandmarkEstimator:
         elif self.mode == 'mediapipe':
             self.detector = mediapipe.solutions.face_mesh.FaceMesh(
                 max_num_faces=config.face_detector.mediapipe_max_num_faces)
+        elif self.mode == 'mbn_v3':
+            self.max_threads = 4
+            self.max_faces = 2
+            options = onnxruntime.SessionOptions()
+            options.inter_op_num_threads = 1
+            options.intra_op_num_threads = max(self.max_threads,4)
+            options.execution_mode = onnxruntime.ExecutionMode.ORT_SEQUENTIAL
+            options.graph_optimization_level = onnxruntime.GraphOptimizationLevel.ORT_ENABLE_ALL
+            options.log_severity_level = 3
+            self.detection = onnxruntime.InferenceSession(config.face_detector.mbn_v3_path, sess_options=options)
+
         else:
             raise ValueError
 
@@ -46,6 +60,8 @@ class LandmarkEstimator:
             return self._detect_faces_face_alignment_sfd(image)
         elif self.mode == 'mediapipe':
             return self._detect_faces_mediapipe(image)
+        elif self.mode == 'mbn_v3':
+            return self._detect_faces_mbn_v3(image)
         else:
             raise ValueError
             

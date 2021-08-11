@@ -3,15 +3,16 @@ import logging
 import pathlib
 from ptgaze.common import yawn
 from typing import Optional
-
+import time
 import cv2
 import numpy as np
 from omegaconf import DictConfig
 
 from common import Face, FacePartsName, Visualizer
 from gaze_estimator import GazeEstimator
-from utils import get_3d_face_model
+from utils import get_3d_face_model, round
 from common.yawn import Yawn
+from common.tracker import Tracker
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -38,6 +39,13 @@ class Demo:
         self.show_landmarks = self.config.demo.show_landmarks
         self.show_normalized_image = self.config.demo.show_normalized_image
         self.show_template_model = self.config.demo.show_template_model
+
+        self.eye_pitch = None
+        self.eye_yaw = None
+        self.head_pitch = None
+        self.head_yaw = None
+        self.head_roll = None
+        self.FPS = None
 
     def run(self) -> None:
         if self.config.demo.use_camera or self.config.demo.video_path:
@@ -69,12 +77,12 @@ class Demo:
                 self._wait_key()
                 if self.stop:
                     break
-
+            start = time.time()        
             ok, frame = self.cap.read()
             if not ok:
                 break
             self._process_image(frame)
-
+            self.FPS = round(1 / (time.time() - start))
             if self.config.demo.display_on_screen:
                 cv2.imshow('frame', self.visualizer.image)
         self.cap.release()
@@ -91,10 +99,10 @@ class Demo:
         for face in faces:
             self.gaze_estimator.estimate_gaze(undistorted, face)
             self._draw_face_bbox(face)
-            self._draw_head_pose(face)
+            self.head_pitch, self.head_yaw, self.head_roll = self._draw_head_pose(face)
             self._draw_landmarks(face)
             self._draw_face_template_model(face)
-            self._draw_gaze_vector(face)
+            self.eye_pitch, self.eye_yaw = self._draw_gaze_vector(face)
             self._display_normalized_image(face)
             self._display_info(image, face)
 
@@ -192,6 +200,7 @@ class Demo:
         pitch, yaw, roll = face.change_coordinate_system(euler_angles)
         logger.info(f'[head] pitch: {pitch:.2f}, yaw: {yaw:.2f}, '
                     f'roll: {roll:.2f}, distance: {face.distance:.2f}')
+        return round(pitch), round(yaw), round(roll)
 
     def _draw_landmarks(self, face: Face) -> None:
         if not self.show_landmarks:
@@ -226,7 +235,13 @@ class Demo:
 
     def _display_info(self, frame, face: Face) -> None:
         yawn_count = self.yawn._detect_yawn(frame, face.bbox)
-        self.visualizer.draw_info(yawn_count, org=(10, 50))
+        self.visualizer.draw_info("FPS", self.FPS, org=(10, 50))
+        self.visualizer.draw_info("Yawn_count", yawn_count, org=(10, 100))
+        self.visualizer.draw_info("Eye_pitch", self.eye_pitch, org=(10, 150))
+        self.visualizer.draw_info("Eye_yaw", self.eye_yaw, org=(10, 200))
+        self.visualizer.draw_info("Head_pitch", self.head_pitch, org=(10, 250))
+        self.visualizer.draw_info("Head_yaw", self.head_yaw, org=(10, 300))
+        self.visualizer.draw_info("Head_roll", self.head_roll, org=(10, 350))
 
     def _draw_gaze_vector(self, face: Face) -> None:
         length = self.config.demo.gaze_visualization_length
@@ -243,5 +258,6 @@ class Demo:
                 face.center, face.center + length * face.gaze_vector)
             pitch, yaw = np.rad2deg(face.vector_to_angle(face.gaze_vector))
             logger.info(f'[face] pitch: {pitch:.2f}, yaw: {yaw:.2f}')
+            return round(pitch), round(yaw)
         else:
             raise ValueError
