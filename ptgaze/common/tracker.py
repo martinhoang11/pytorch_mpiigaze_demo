@@ -21,6 +21,7 @@ from utils import *
 class Tracker:
     def __init__(self, width, height, model_type=3, config=DictConfig, threshold=None) -> None:
         self._config = config
+        self.threshold = 0.15
         self.max_threads = 4
         self.max_faces = 1
         self.detection_threshold = 0.2
@@ -69,6 +70,7 @@ class Tracker:
         if model_type == -3:
             model = "lm_modelU_opt.onnx"
         model_base_path = get_model_base_path(self._config.lms_detector.model_path)
+        
 
         if threshold is None:
             threshold = 0.6
@@ -76,6 +78,7 @@ class Tracker:
                 threshold = 0.87
 
         self.session = onnxruntime.InferenceSession(os.path.join(model_base_path, model), sess_options=options)
+        self.input_name = self.session.get_inputs()[0].name
         options.intra_op_num_threads = 1
         self.detection = onnxruntime.InferenceSession(os.path.join(model_base_path, "mnv3_detection_opt.onnx"), sess_options=options)
 
@@ -159,7 +162,7 @@ class Tracker:
 
             if crop_x2 - crop_x1 < 4 or crop_y2 - crop_y1 < 4:
                 continue
-            crop = preprocess(im, (crop_x1, crop_y1, crop_x2, crop_y2))
+            crop = preprocess(im, (crop_x1, crop_y1, crop_x2, crop_y2), self.res_i, self.std_res, self.mean_res)
             crops.append(crop)
             crop_info.append((crop_x1, crop_y1, scale_x, scale_y, 0.0))
 
@@ -198,10 +201,11 @@ class Tracker:
 
         sorted_results = sorted(best_results.values(), key=lambda x: x[0], reverse=True)[:1]
         lms = lms[0][:, 0:2]
+        lms[:,[0, 1]] = lms[:,[1, 0]]
         x1, y1 = tuple(lms[0:66].min(0))
         x2, y2 = tuple(lms[0:66].max(0))
-        bbox = (y1, x1, y2 - y1, x2 - x1)
-        bbox = np.array(bbox).reshape(2,2).astype(np.int32)
+        bbox = (x1, y1, x2, y2)
+        bbox = np.array(bbox).reshape(2,2)
         detected.append(Face(bbox, lms))
         return detected
 

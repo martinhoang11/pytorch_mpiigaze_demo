@@ -33,9 +33,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         '--face-detector',
         type=str,
-        default='mediapipe',
+        default='mbn_v3',
         choices=[
-            'dlib', 'face_alignment_dlib', 'face_alignment_sfd', 'mediapipe'
+            'dlib', 'face_alignment_dlib', 'face_alignment_sfd', 'mediapipe', 'mbn_v3'
         ],
         help='The method used to detect faces and find face landmarks '
         '(default: \'mediapipe\')')

@@ -2,7 +2,7 @@ import bz2
 import logging
 import operator
 import pathlib
-
+import os
 import cv2
 import numpy
 import torch.hub
@@ -13,13 +13,15 @@ from omegaconf import DictConfig
 from common.face_model import FaceModel
 from common.face_model_68 import FaceModel68
 from common.face_model_mediapipe import FaceModelMediaPipe
-
+from common.face_model_mbnv3 import FaceModelMBN_V3
 logger = logging.getLogger(__name__)
 
 
 def get_3d_face_model(config: DictConfig) -> FaceModel:
     if config.face_detector.mode == 'mediapipe':
         return FaceModelMediaPipe()
+    elif config.face_detector.mode == 'mbn_v3':
+        return FaceModelMBN_V3()
     else:
         return FaceModel68()
 
@@ -267,3 +269,7 @@ def get_model_base_path(model_dir):
     else:
         model_base_path = model_dir
     return model_base_path
+
+def resolve(name):
+    f = os.path.join(os.path.dirname(__file__), name)
+    return f

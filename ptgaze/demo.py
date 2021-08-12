@@ -46,6 +46,9 @@ class Demo:
         self.head_yaw = None
         self.head_roll = None
         self.FPS = None
+        self.width = 1280
+        self.height = 720
+        self.tracker = Tracker(self.width, self.height, model_type=4, config=self.config)
 
     def run(self) -> None:
         if self.config.demo.use_camera or self.config.demo.video_path:
@@ -79,6 +82,7 @@ class Demo:
                     break
             start = time.time()        
             ok, frame = self.cap.read()
+            self.height, self.width, channels = frame.shape
             if not ok:
                 break
             self._process_image(frame)
@@ -95,7 +99,8 @@ class Demo:
             self.gaze_estimator.camera.dist_coefficients)
 
         self.visualizer.set_image(image.copy())
-        faces = self.gaze_estimator.detect_faces(undistorted)
+        # faces = self.gaze_estimator.detect_faces(undistorted)
+        faces = self.tracker.predict(undistorted)
         for face in faces:
             self.gaze_estimator.estimate_gaze(undistorted, face)
             self._draw_face_bbox(face)
@@ -104,7 +109,7 @@ class Demo:
             self._draw_face_template_model(face)
             self.eye_pitch, self.eye_yaw = self._draw_gaze_vector(face)
             self._display_normalized_image(face)
-            self._display_info(image, face)
+            # self._display_info(image, face)
 
         if self.config.demo.use_camera:
             self.visualizer.image = self.visualizer.image[:, ::-1]

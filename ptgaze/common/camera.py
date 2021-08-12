@@ -20,10 +20,13 @@ class Camera:
             data = yaml.safe_load(f)
         self.width = data['image_width']
         self.height = data['image_height']
-        self.camera_matrix = np.array(data['camera_matrix']['data']).reshape(
-            3, 3)
-        self.dist_coefficients = np.array(
-            data['distortion_coefficients']['data']).reshape(-1, 1)
+        
+        # self.camera_matrix = np.array(data['camera_matrix']['data']).reshape(
+        #     3, 3)
+        # self.dist_coefficients = np.array(
+        #     data['distortion_coefficients']['data']).reshape(-1, 1)
+        self.camera_matrix = np.array([[self.width, 0, self.width/2], [0, self.width, self.height/2], [0, 0, 1]], np.float32)
+        self.dist_coefficients = np.zeros((4,1))
 
     def project_points(self,
                        points3d: np.ndarray,

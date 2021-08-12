@@ -17,7 +17,7 @@ gaze_estimator:
 yawn_detector:
   model_path: C:\Users\huynh14\DMS\intern_dms\models\yawn_model_80.onnx
 lms_detector:
-  model_path: ""
+  model_path: C:\Users\huynh14\DMS\intern_dms\models\
 demo:
   use_camera: true
   display_on_screen: true

@@ -17,6 +17,7 @@ class FaceModel:
     NOSE_INDICES: np.ndarray
     CHIN_INDEX: int
     NOSE_INDEX: int
+    
 
     def estimate_head_pose(self, face: Face, camera: Camera) -> None:
         """Estimate the head pose by fitting 3D template model."""
@@ -27,15 +28,20 @@ class FaceModel:
         # initial estimate of the head pose is not rotated and the
         # face is in front of the camera.
         rvec = np.zeros(3, dtype=np.float)
+        # tvec = np.array([0, 0, 1], dtype=np.float)
         tvec = np.array([0, 0, 1], dtype=np.float)
-        _, rvec, tvec = cv2.solvePnP(self.LANDMARKS,
-                                     face.landmarks,
-                                     camera.camera_matrix,
-                                     camera.dist_coefficients,
-                                     rvec,
-                                     tvec,
-                                     useExtrinsicGuess=True,
-                                     flags=cv2.SOLVEPNP_ITERATIVE)
+        try:
+            _, rvec, tvec = cv2.solvePnP(self.LANDMARKS,
+                                        face.landmarks,
+                                        camera.camera_matrix,
+                                        camera.dist_coefficients,
+                                        rvec,
+                                        tvec,
+                                        useExtrinsicGuess=True,
+                                        flags=cv2.SOLVEPNP_ITERATIVE)
+        except:
+            rvec = np.zeros(3, dtype=np.float)
+            tvec = np.array([0, 0, 1], dtype=np.float)
         rot = Rotation.from_rotvec(rvec)
         face.head_pose_rot = rot
         face.head_position = tvec

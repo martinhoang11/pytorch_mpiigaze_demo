@@ -40,6 +40,7 @@ class Yawn:
         return onnx_sess, input_name, label_name
 
     def _prepare_input_blob(self, im: np.ndarray) -> np.ndarray:
+        print(im.shape)
         if im.shape[0] != self.MAX_IMAGE_WIDTH or im.shape[1] != self.MAX_IMAGE_HEIGHT:
             im = cv2.resize(im, self.IMAGE_PAIR_SIZE)
         im = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)

@@ -82,6 +82,7 @@ class Visualizer:
                                              face.head_pose_rot.as_rotvec(),
                                              face.head_position)
         center = face.landmarks[self._center_point_index]
+        print(self._center_point_index)
         center = self._convert_pt(center)
         for pt, color in zip(axes2d, AXIS_COLORS):
             pt = self._convert_pt(pt)
